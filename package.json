@@ -1,0 +1,15 @@
+{
+  "name": "multicaster",
+  "version": "1.0.0",
+  "description": "Discover peers within local network via mDNS",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Alexander La Bianca",
+  "license": "MIT",
+  "dependencies": {
+    "dns-packet": "^4.0.0",
+    "multicast-dns": "^6.2.3"
+  }
+}
