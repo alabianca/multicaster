@@ -30,7 +30,8 @@ module.exports = function() {
     _socket.on('message', (msg,rinfo)=>{
         //message received
         const decoded = packet.decode(msg);
-        console.log('ip' ,rinfo.address);
+        //console.log('ip' ,rinfo.address);
+        //console.log(decoded)
         switch(decoded.type) {
             case "query": multicaster.emit('query', {msg: decoded,from:rinfo.address});
                 break;
@@ -52,9 +53,9 @@ module.exports = function() {
             flags: packet.RECURSION_DESIRED,
             questions: [
                 {
-                    type: QTYPE,
-                    class: 'IN',
-                    name: name
+                    type:QTYPE,
+                    class:'IN',
+                    name:name
                 }
             ]
         })
@@ -66,17 +67,17 @@ module.exports = function() {
 
     
     
-    multicaster.respond = function() {
-        const host = os.hostname();
+    multicaster.respond = function(response) {
+
         const buffer = packet.encode({
             type: 'response',
             answers: [{
-                type: 'SRV',
+                type:QTYPE,
                 class: 'IN',
-                name: host,
+                name: response.name,
                 data: {
-                    port: 3000,
-                    target: 'spacedrop'
+                    port: response.port,
+                    target: response.target
                 }
             }]
 
