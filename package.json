@@ -9,7 +9,7 @@
   "author": "Alexander La Bianca",
   "license": "MIT",
   "dependencies": {
-    "dns-packet": "^4.0.0",
+    "dns-packet": "^5.0.2",
     "multicast-dns": "^6.2.3",
     "network-address": "^1.1.2"
   }

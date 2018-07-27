@@ -5,11 +5,11 @@ const os = require('os');
 const me = require('./lib/address');
 
 
-module.exports = function() {
+module.exports = function(localAddress) {
     const MULTICAST_IPV4 = '224.0.0.251';
     const MULTICAST_PORT = 5353;
     const QTYPE = 'SRV';
-    const myself = me();
+    const myself = localAddress || me();
     let intervalId = null;
     const _socket = dgram.createSocket({
         type: 'udp4',
@@ -58,11 +58,8 @@ module.exports = function() {
                     name:name
                 }
             ]
-        })
+        });
         _socket.send(buffer,0,buffer.length,MULTICAST_PORT,MULTICAST_IPV4);
-        // intervalId = setInterval(()=>{
-        //     _socket.send(buffer,0,buffer.length,MULTICAST_PORT,MULTICAST_ADDRESS);
-        // },5000);
     }
 
     
@@ -82,23 +79,23 @@ module.exports = function() {
     //PRIVATE FUNCTIONS
     const _buildResponse = function(response) {
         const _packet = {type: 'response'};
-   
         if(response.qtype === 'A' || !response.qtype) {
             _packet.answers = [{
-                type: 'A',
-                ttl: response.ttl || 225,
-                data: response.data,
-                name: response.name
+                type:      'A',
+                ttl:       response.ttl || 225,
+                data:      response.data,
+                name:      response.name
             }]
         }
         else if(response.qtype === 'SRV') {
             _packet.answers = [{
-                type: 'SRV',
-                class: 'IN',
-                name: response.name,
+                type:      'SRV',
+                class:     'IN',
+                ttl:       response.ttl || 225,
+                name:      response.name,
                 data: {
-                    port: response.port,
-                    target: response.target
+                    port:  response.port,
+                    target:response.target
                 }
             }]
         }
@@ -108,23 +105,22 @@ module.exports = function() {
 
     //PUPLIC FUNCTIONS
     const register = function(name) {
-        //console.log(myself);
   
         multicaster.on('query', (query)=>{
             const qs = query.msg.questions;
-            
-            for(let i = 0; i<qs.length; i++) {
 
+            for(let i = 0; i<qs.length; i++) {
                 if(qs[i].name) {
                     const trimmed = qs[i].name.replace('.local', '');
- 
+
                     if(trimmed == name) {
                         //respond
                         multicaster.respond({
                             name: qs[i].name,
-                            qtype: 'A',
+                            qtype: QTYPE,
                             ttl: 225,
-                            data: myself
+                            port:MULTICAST_PORT,
+                            target: me()
                         });
 
                         //multicaster.stop();

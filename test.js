@@ -1,33 +1,35 @@
 
 const os = require('os');
-//const myself = '192.168.1.220'
-const Multicaster = require('./index')();
+const me = require('./lib/address');
+
+const myself = process.argv[2] || me();
+const Multicaster = require('./index')(myself);
 const multicaster = Multicaster.multicaster;
-const registration = Multicaster.register('test');
+const registration = Multicaster.register('spacedrop');
+
 
 setTimeout(()=>{
     registration.unregister();
 },5000);
 //const target = process.argv[2];
 
-const me = require('./lib/address');
 
 // console.log(me())
-// const myself = me();
+//const myself = me();
 
-// multicaster.on('response', (res)=>{
-//     //console.log('GOT A RESPONSE');
-//     //console.log(res.msg.answers);
-//     const answ = res.msg.answers[0];
-//     if(myself !== res.from) {
-//         if(answ && answ.name && answ.name === 'spacedrop') {
-//             console.log(`Host Found: ${answ.data.target}: ${answ.data.port}`)
-//             multicaster.stop();
-//             process.exit(1);
-//         }
-//     }
+multicaster.on('response', (res)=>{
+    console.log('GOT A RESPONSE');
+    console.log(res.msg.answers);
+    const answ = res.msg.answers[0];
+    if(myself !== res.from) {
+        if(answ && answ.name && answ.name === 'spacedrop') {
+            console.log(`Host Found: ${answ.data.target}: ${answ.data.port}`)
+            multicaster.stop();
+            process.exit(1);
+        }
+    }
     
-// })
+});
 
 
 // multicaster.on('query', (query)=>{
@@ -45,10 +47,10 @@ const me = require('./lib/address');
 // });
 
 
-
-// setInterval(()=>{
-//     multicaster.scan(target);
-// }, 5000)
+multicaster.scan('spacedrop');
+setInterval(()=>{
+    multicaster.scan('spacedrop');
+}, 3000)
 
 // setTimeout(()=>{
 //     console.log('Host not found');
