@@ -1,59 +1,34 @@
-
-const os = require('os');
-const me = require('./lib/address');
-
-const myself = process.argv[2] || me();
-const Multicaster = require('./index')(myself);
-const multicaster = Multicaster.multicaster;
-const registration = Multicaster.register('spacedrop');
+const net = require('net');
+const Multicaster = require('multicaster')();
+const address = process.argv[2];
+const mdns = Multicaster.multicaster;
+const subscription = Multicaster.register('spacedrop.local');
+const self = me();
 
 
-setTimeout(()=>{
-    registration.unregister();
-},5000);
-//const target = process.argv[2];
-
-
-// console.log(me())
-//const myself = me();
-
-multicaster.on('response', (res)=>{
-    console.log('GOT A RESPONSE');
-    console.log(res.msg.answers);
-    const answ = res.msg.answers[0];
-    if(myself !== res.from) {
-        if(answ && answ.name && answ.name === 'spacedrop') {
-            console.log(`Host Found: ${answ.data.target}: ${answ.data.port}`)
-            multicaster.stop();
-            process.exit(1);
-        }
-    }
-    
+const server = net.createServer((socket)=>{
+    console.log('We got a connection');
 });
 
+server.listen(3000,()=>{
+    console.log('Server @ ' + address + ' listening on port 3000');
 
-// multicaster.on('query', (query)=>{
-    
-//     console.log('QUERY FROM: ', query.from)
-//     if(myself !== query.from) {
-//         console.log('RESPONDING TO: ' + query.from)
-//         multicaster.respond({
-//             name: 'spacedrop',
-//             port: 3000,
-//             target: myself
-//         })
-//     }
-    
-// });
+    mdns.on('response',onResponse);
+
+    setInterval(()=>{
+        mdns.scan('spacedrop.local');
+    },3000);
+})
 
 
-multicaster.scan('spacedrop');
-setInterval(()=>{
-    multicaster.scan('spacedrop');
-}, 3000)
+function onResponse(res) {
+    console.log('Got a Response ...');
+    const answ = res.msg.answers[0];
 
-// setTimeout(()=>{
-//     console.log('Host not found');
-//     process.exit(1);
-// },10000)
+    if(self != res.from) {
+        if(answ && answ.name && answ.name === 'spacedrop') {
+            console.log('It is a Peer!!');
+        }
+    }
+}
 
