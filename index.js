@@ -2,14 +2,17 @@ const dgram = require('dgram');
 const EventEmitter = require('events').EventEmitter;
 const packet = require('dns-packet');
 const os = require('os');
-const me = require('./lib/address');
+const address = require('./lib/address');
+const me = address.me;
+const myNetworkInterfaces = address.myNetworkInterfaces();
 
 
-module.exports = function(localAddress) {
+module.exports = function(options) {
+    const selfAddress = options.address || null;
+    const selfPort = options.port || null;
     const MULTICAST_IPV4 = '224.0.0.251';
     const MULTICAST_PORT = 5353;
     const QTYPE = 'SRV';
-    const myself = localAddress || me();
     let intervalId = null;
     const _socket = dgram.createSocket({
         type: 'udp4',
@@ -33,9 +36,9 @@ module.exports = function(localAddress) {
         //message received
         const decoded = packet.decode(msg);
         switch(decoded.type) {
-            case "query": multicaster.emit('query', {msg: decoded,from:rinfo.address});
+            case "query": _emitQuery(decoded,rinfo);
                 break;
-            case "response": multicaster.emit("response", {msg:decoded, from: rinfo.address});
+            case "response": _emitResponse(decoded,rinfo);
                 break;
         }
         
@@ -70,7 +73,6 @@ module.exports = function(localAddress) {
     }
     
     multicaster.stop = function() {
-        console.log('stopping');
         clearInterval(intervalId);
         _socket.dropMembership(MULTICAST_IPV4);
         _socket.close();
@@ -102,6 +104,38 @@ module.exports = function(localAddress) {
         return _packet;
     }
 
+    function _emitResponse(message,rinfo) {
+        const remoteAddress = rinfo.address;
+        const isMe = myNetworkInterfaces.find(interface => interface.address === remoteAddress);
+        const id = _myId(rinfo);
+
+        if(isMe && selfAddress) {
+            multicaster.emit('response',{msg:message,from:id});
+        } else {
+            multicaster.emit('response', {msg:message,from:remoteAddress + ":" + rinfo.port});
+        }
+    }
+
+    function _emitQuery(message,rinfo) {
+        // const remoteAddress = rinfo.address;
+        // const isMe = myNetworkInterfaces.find(interface => interface.address === remoteAddress);
+        // const id = _myId(rinfo);
+        // if(isMe && selfAddress) {
+        //     multicaster.emit('query',{msg:message,from:id});
+        // } else {
+        //     multicaster.emit('query', {msg:message,from:remoteAddress + ':' + rinfo.port});
+        // }
+        multicaster.emit('query', {msg:message,from:rinfo.address + ':' + rinfo.port});
+    }
+
+    function _myId(rinfo) {
+        const address = selfAddress ? selfAddress : rinfo.address;
+        const port = selfPort ? selfPort : rinfo.port;
+
+        return address + ":" + port;
+        
+    }
+
 
     //PUPLIC FUNCTIONS
     const register = function(name) {
@@ -119,11 +153,9 @@ module.exports = function(localAddress) {
                             name: qs[i].name,
                             qtype: QTYPE,
                             ttl: 225,
-                            port:MULTICAST_PORT,
+                            port: selfPort || MULTICAST_PORT,
                             target: me()
                         });
-
-                        //multicaster.stop();
                     }
                     
                 }
