@@ -5,13 +5,13 @@ const port = process.argv[3];
 const myname = process.argv[4];
 const SERVICE_NAME = myname + '.' + "spacedrop";
 console.log(SERVICE_NAME)
-const Multicaster = require('multicaster')({
+const Multicaster = require('./index')({
     address:address,
     port:port
 });
 const mdns = Multicaster.multicaster;
 const subscription = Multicaster.register(SERVICE_NAME);
-const self = require('./me').me();
+
 const id = address + ":" + port;
 let intervalId = null;
 let receiveSocket = null;
