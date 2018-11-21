@@ -218,16 +218,18 @@ module.exports = function(options) {
             unregister:function() {
                 multicaster.stop();
             }
-        }
+        } 
+    }
 
-        
+    const getId = function() {
+        return SERVICE_OWNER;
     }
 
 
     return {
         multicaster:multicaster,
         register: register,
-        id: SERVICE_OWNER
+        id: getId
     }
 }
 
