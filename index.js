@@ -226,7 +226,8 @@ module.exports = function(options) {
 
     return {
         multicaster:multicaster,
-        register: register
+        register: register,
+        id: SERVICE_OWNER
     }
 }
 
